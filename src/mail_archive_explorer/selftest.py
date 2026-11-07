@@ -104,6 +104,11 @@ def run() -> int:
         assert big is False, "un HTML > limite de setHtml() aurait dû être refusé"
         return "0 connexion, gros HTML refusé"
 
+    def version_check():
+        from . import __version__
+        return __version__
+
+    step("version", version_check)
     step("pypff", pypff_check)
     step("sqlite_fts5", fts_check)
     step("import_recherche", import_search)

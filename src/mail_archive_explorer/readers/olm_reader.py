@@ -15,6 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import BinaryIO, Iterator
 
+from ..core.i18n import tr
 from ..core.models import FolderInfo, RawAddress, RawAttachment, RawMessage, ReadError
 from .html_text import html_to_text
 
@@ -75,7 +76,7 @@ class OlmReader:
 
     def open(self) -> None:
         if not zipfile.is_zipfile(self.path):
-            raise ValueError("Fichier OLM invalide : ce n'est pas une archive ZIP.")
+            raise ValueError(tr("Fichier OLM invalide : ce n'est pas une archive ZIP."))
         self._zip = zipfile.ZipFile(self.path, "r")   # lecture seule
 
     def close(self) -> None:
@@ -123,10 +124,10 @@ class OlmReader:
     def _email(self, member: str) -> ET.Element:
         info = self._zip.getinfo(member)
         if info.file_size > MAX_XML_BYTES:
-            raise ValueError(f"XML trop volumineux ({info.file_size // 1_000_000} Mo décompressés) : refusé")
+            raise ValueError(tr("XML trop volumineux ({n} Mo décompressés) : refusé").format(n=info.file_size // 1_000_000))
         data = self._zip.read(member)
         if b"<!DOCTYPE" in data[:4096].upper() or b"<!ENTITY" in data[:65536].upper():
-            raise ValueError("DOCTYPE/ENTITY interdits dans un message OLM")
+            raise ValueError(tr("DOCTYPE/ENTITY interdits dans un message OLM"))
         root = ET.fromstring(data)
         em = root.find("email") if root.tag == "emails" else root
         if em is None:
@@ -191,5 +192,5 @@ class OlmReader:
             raise IndexError(index)
         url = al[index].get("OPFAttachmentURL")
         if not url:
-            raise FileNotFoundError("Contenu de la pièce jointe absent de l'archive OLM.")
+            raise FileNotFoundError(tr("Contenu de la pièce jointe absent de l'archive OLM."))
         return self._zip.open(url)

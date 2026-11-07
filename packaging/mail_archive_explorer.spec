@@ -1,6 +1,8 @@
 # -*- mode: python -*-
 # Build : pyinstaller packaging/mail_archive_explorer.spec  (depuis la racine du dépôt)
 import sys
+sys.path.insert(0, "../src")
+from mail_archive_explorer import __version__
 from PyInstaller.utils.hooks import collect_submodules
 
 block_cipher = None
@@ -29,4 +31,4 @@ exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="MailArchiveExplorer",
 coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="MailArchiveExplorer")
 if sys.platform == "darwin":
     app = BUNDLE(coll, name="MailArchiveExplorer.app", bundle_identifier="org.mailarchiveexplorer.app",
-                 info_plist={"CFBundleShortVersionString": "0.1.0", "NSHighResolutionCapable": True})
+                 info_plist={"CFBundleShortVersionString": __version__, "CFBundleVersion": __version__, "NSHighResolutionCapable": True})

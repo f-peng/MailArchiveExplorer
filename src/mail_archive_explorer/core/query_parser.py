@@ -11,6 +11,9 @@ import re
 from dataclasses import dataclass, field
 
 
+from .i18n import tr
+
+
 class QueryError(ValueError):
     """Requête invalide, message destiné à l'utilisateur."""
 
@@ -76,7 +79,7 @@ class _Parser:
             return None
         node = self.or_expr()
         if self.peek() is not None:
-            raise QueryError("Parenthèse fermante inattendue.")
+            raise QueryError(tr("Parenthèse fermante inattendue."))
         return node
 
     def or_expr(self) -> str:
@@ -99,7 +102,7 @@ class _Parser:
                 continue
             if p.kind == "OP" and p.value == "NOT":
                 if negate:
-                    raise QueryError("Deux NOT consécutifs ne sont pas autorisés.")
+                    raise QueryError(tr("Deux NOT consécutifs ne sont pas autorisés."))
                 self.i += 1
                 negate = True
                 continue
@@ -110,11 +113,11 @@ class _Parser:
             (neg if negate else pos).append(atom)
             negate = False
         if negate:
-            raise QueryError("NOT doit être suivi d'un terme.")
+            raise QueryError(tr("NOT doit être suivi d'un terme."))
         if not pos:
             if neg:
-                raise QueryError("Une requête ne peut pas contenir uniquement des exclusions (NOT).")
-            raise QueryError("Expression vide.")
+                raise QueryError(tr("Une requête ne peut pas contenir uniquement des exclusions (NOT)."))
+            raise QueryError(tr("Expression vide."))
         out = pos[0] if len(pos) == 1 else "(" + " AND ".join(pos) + ")"
         if neg:
             out = f"({out} NOT " + (neg[0] if len(neg) == 1 else "(" + " OR ".join(neg) + ")") + ")"
@@ -123,14 +126,14 @@ class _Parser:
     def atom(self, column: str | None = None) -> str | None:
         p = self.peek()
         if p is None:
-            raise QueryError("Expression incomplète.")
+            raise QueryError(tr("Expression incomplète."))
         if p.kind == "LP":
             self.i += 1
             if self.peek() is None:
-                raise QueryError("Parenthèse fermante manquante.")
+                raise QueryError(tr("Parenthèse fermante manquante."))
             inner = self.or_expr()
             if not (self.peek() and self.peek().kind == "RP"):
-                raise QueryError("Parenthèse fermante manquante.")
+                raise QueryError(tr("Parenthèse fermante manquante."))
             self.i += 1
             return inner if column is None else self._scope(column, inner)
         if p.kind == "PHRASE":
@@ -148,10 +151,10 @@ class _Parser:
                         return self._term(rest, col, wildcard=True)
                     nxt = self.peek()
                     if nxt is None or nxt.kind not in ("TERM", "PHRASE", "LP"):
-                        raise QueryError(f"« {field_name}: » doit être suivi d'un terme.")
+                        raise QueryError(tr("« {f}: » doit être suivi d'un terme.").format(f=field_name))
                     return self.atom(col)
             return self._term(word, column, wildcard=True)
-        raise QueryError("Opérateur inattendu : " + (p.value or p.kind))
+        raise QueryError(tr("Opérateur inattendu : ") + (p.value or p.kind))
 
     @staticmethod
     def _scope(column: str, inner: str) -> str:
@@ -176,13 +179,13 @@ def parse_query(text: str) -> ParsedQuery:
     """Retourne la requête FTS5 et les filtres extraits. Lève QueryError (message clair) si invalide."""
     text = (text or "").replace("\x00", " ")
     if len(text) > MAX_QUERY_CHARS:
-        raise QueryError(f"Requête trop longue (maximum {MAX_QUERY_CHARS} caractères).")
+        raise QueryError(tr("Requête trop longue (maximum {n} caractères).").format(n=MAX_QUERY_CHARS))
     if text.count("(") > MAX_DEPTH:
-        raise QueryError("Trop de parenthèses imbriquées.")
+        raise QueryError(tr("Trop de parenthèses imbriquées."))
     try:
         return _parse(text)
     except RecursionError:
-        raise QueryError("Requête trop complexe.") from None
+        raise QueryError(tr("Requête trop complexe.")) from None
 
 
 def _parse(text: str) -> ParsedQuery:
@@ -193,7 +196,7 @@ def _parse(text: str) -> ParsedQuery:
         if low.startswith(("before:", "avant:", "after:", "apres:", "après:")):
             key, _, val = tok.partition(":")
             if not _DATE.match(val):
-                raise QueryError(f"Date invalide pour « {key}: » (format AAAA-MM-JJ attendu).")
+                raise QueryError(tr("Date invalide pour « {k}: » (format AAAA-MM-JJ attendu).").format(k=key))
             if key.lower() in ("before", "avant"):
                 result.date_to = val
             else:
@@ -206,7 +209,7 @@ def _parse(text: str) -> ParsedQuery:
     cleaned = _strip_filters(text)
     toks = _lex(cleaned)
     if sum(1 for t in toks if t.kind in ("TERM", "PHRASE")) > MAX_TERMS:
-        raise QueryError(f"Requête trop complexe (maximum {MAX_TERMS} termes).")
+        raise QueryError(tr("Requête trop complexe (maximum {n} termes).").format(n=MAX_TERMS))
     result.fts = _Parser(toks).parse() if cleaned.strip() else None
     return result
 

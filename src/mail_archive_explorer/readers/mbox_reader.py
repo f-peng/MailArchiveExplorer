@@ -10,6 +10,7 @@ import re
 from pathlib import Path
 from typing import BinaryIO, Iterator
 
+from ..core.i18n import tr
 from ..core.models import FolderInfo, RawMessage, ReadError
 from .email_parse import attachment_bytes, parse_bytes, to_raw_message, walk_attachments
 
@@ -70,10 +71,10 @@ class MboxReader:
 
     def _read(self, ref: str) -> bytes:
         if ":" not in ref:
-            raise ValueError("Référence MBOX ancienne (format < 2) : décharger puis recharger cette archive.")
+            raise ValueError(tr("Référence MBOX ancienne (format < 2) : décharger puis recharger cette archive."))
         off, _, length = ref.partition(":")
         if int(length) > MAX_MESSAGE_BYTES:
-            raise ValueError(f"message de {int(length) // 1_000_000} Mo : au-delà du plafond ({MAX_MESSAGE_BYTES // 1_000_000} Mo)")
+            raise ValueError(tr("message de {a} Mo : au-delà du plafond ({b} Mo)").format(a=int(length) // 1_000_000, b=MAX_MESSAGE_BYTES // 1_000_000))
         self._fh.seek(int(off))
         return self._fh.read(int(length))
 

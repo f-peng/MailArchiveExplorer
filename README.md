@@ -7,6 +7,7 @@ Application de bureau **100 % locale** pour consulter, indexer et rechercher des
 - Aucune donnée ne quitte la machine ; les archives sources sont ouvertes en **lecture seule** et ne sont jamais modifiées.
 - Import en arrière-plan, annulable et reprenable ; recherche plein texte (accents ignorés) ; tri par colonne ; thèmes clair et sombre.
 - Export en EML, MBOX, CSV et pièces jointes.
+- Interface en **français et anglais** (bouton 🌐 *Langue / Language*, appliqué au redémarrage ; automatique par défaut selon la langue du système). Menu **À propos** : version et détails copiables pour un rapport de bug.
 
 > **Statut : pré-version (`v0.1.1-rc3`).** Utilisable, mais jeune : voir « Limites connues ».
 
@@ -98,7 +99,7 @@ Build local des exécutables : `pip install -r requirements-build.txt && pip ins
 - **PST** : validé sur de petits fichiers publics ; débit et mémoire sur des archives de plusieurs Go non mesurés. Seuls les e-mails sont importés (pas contacts, agendas, tâches). Un message incorporé en pièce jointe est extrait sous forme brute.
 - **OLM** : lecteur écrit d'après un seul fichier réel ; selon l'archive, beaucoup de messages n'ont qu'un aperçu (et non leur corps complet) et la plupart des images incorporées n'ont pas leur contenu. Dates supposées en UTC.
 - **Export** : l'EML des messages PST/OLM est reconstruit (en-têtes de transport d'origine absents) ; MBOX/EML sources sont réexportés à l'identique.
-- L'import tourne dans un fil de l'application (pas un processus séparé) ; pas d'interface de dédoublonnage (les doublons sont détectés et conservés) ; interface en français uniquement ; exécutables non signés.
+- L'import tourne dans un fil de l'application (pas un processus séparé) ; pas d'interface de dédoublonnage (les doublons sont détectés et conservés) ; exécutables non signés.
 
 ## Licence
 

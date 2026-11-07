@@ -7,6 +7,7 @@ import re
 import sqlite3
 import zlib
 
+from ..core.i18n import tr
 from .dialogs import messages as dialogs
 from .html_sanitizer import MAX_HTML_BYTES, sanitize_html
 from .message_list import short_name, split_recipients
@@ -98,8 +99,8 @@ if HAVE_WEBENGINE:
         def _link(self, url: QUrl) -> None:
             if url.scheme() not in ("http", "https", "mailto"):
                 return
-            r = dialogs.question(self, "Ouvrir un lien externe",
-                                 f"Ouvrir dans le navigateur système ?\n\n{url.toString()}")
+            r = dialogs.question(self, tr("Ouvrir un lien externe"),
+                                 tr("Ouvrir dans le navigateur système ?") + "\n\n" + url.toString())
             if r == QMessageBox.Yes:
                 QDesktopServices.openUrl(url)
 
@@ -154,11 +155,11 @@ class MessageViewer(QWidget):
         self.atts.itemDoubleClicked.connect(self._att_clicked)
         tl.addWidget(self.atts)
         opts = QHBoxLayout()
-        self.prefer_html = QCheckBox("Affichage HTML")
+        self.prefer_html = QCheckBox(tr("Affichage HTML"))
         self.prefer_html.setChecked(True)
         self.prefer_html.toggled.connect(lambda _: self.show_message(self.current_id) if self.current_id else None)
-        self.remote = QCheckBox("Images distantes")
-        self.remote.setToolTip("Peut révéler votre lecture à l'expéditeur ; bloquées par défaut")
+        self.remote = QCheckBox(tr("Images distantes"))
+        self.remote.setToolTip(tr("Peut révéler votre lecture à l'expéditeur ; bloquées par défaut"))
         self.remote.toggled.connect(lambda _: self.show_message(self.current_id) if self.current_id else None)
         opts.addWidget(self.prefer_html)
         opts.addWidget(self.remote)
@@ -212,8 +213,8 @@ class MessageViewer(QWidget):
         if len(parts) <= 4:
             return e(", ".join(parts))
         if self.expand_rcpt:
-            return e(", ".join(parts)) + " <a href='r'>réduire</a>"
-        return e(", ".join(short_name(p) for p in parts[:4])) + f" <a href='r'>+{len(parts) - 4} autres : tout afficher</a>"
+            return e(", ".join(parts)) + f" <a href='r'>{tr('réduire')}</a>"
+        return e(", ".join(short_name(p) for p in parts[:4])) + f" <a href='r'>{tr('+{n} autres : tout afficher').format(n=len(parts) - 4)}</a>"
 
     def apply_colors(self, c: dict) -> None:
         self.muted = c["muted"]
@@ -248,17 +249,17 @@ class MessageViewer(QWidget):
         b = self.conn.execute("SELECT body_html, headers FROM message_bodies WHERE message_id=?", (mid,)).fetchone()
         e = htmllib.escape
         self.header.setText(
-            f"<div style='font-size:17px; font-weight:600'>{e(m['subject'] or '(sans objet)')}</div>"
+            f"<div style='font-size:17px; font-weight:600'>{e(m['subject'] or tr('(sans objet)'))}</div>"
             f"<table cellspacing='2'>"
-            f"<tr><td style='color:{self.muted}'>De</td><td>&nbsp;{e(m['sender'] or '(inconnu)')}</td></tr>"
-            f"<tr><td style='color:{self.muted}'>À</td><td>&nbsp;{self._rcpt_html(m['recipients'])}</td></tr>"
-            f"<tr><td style='color:{self.muted}'>Date</td><td>&nbsp;{e((m['sent_at'] or '(absente ou invalide)'))} UTC</td></tr>"
-            f"<tr><td style='color:{self.muted}'>Dossier</td><td>&nbsp;{e(self._folder_label(mid))}</td></tr></table>")
+            f"<tr><td style='color:{self.muted}'>{tr('De')}</td><td>&nbsp;{e(m['sender'] or tr('(inconnu)'))}</td></tr>"
+            f"<tr><td style='color:{self.muted}'>{tr('À')}</td><td>&nbsp;{self._rcpt_html(m['recipients'])}</td></tr>"
+            f"<tr><td style='color:{self.muted}'>{tr('Date')}</td><td>&nbsp;{e((m['sent_at'] or tr('(absente ou invalide)')))} UTC</td></tr>"
+            f"<tr><td style='color:{self.muted}'>{tr('Dossier')}</td><td>&nbsp;{e(self._folder_label(mid))}</td></tr></table>")
         self.atts.clear()
         rows = self.conn.execute("SELECT * FROM attachments WHERE message_id=? ORDER BY idx", (mid,)).fetchall()
         for a in rows:
-            size = f"{a['size']:,}".replace(",", " ") + " o" if a["size"] is not None else "?"
-            it = QListWidgetItem(f"📎 {a['filename'] or '(sans nom)'}  [{a['mime'] or 'type inconnu'}, {size}]  — double-clic : enregistrer")
+            size = f"{a['size']:,}".replace(",", " " if tr("o") == "o" else ",") + " " + tr("o") if a["size"] is not None else "?"
+            it = QListWidgetItem(f"📎 {a['filename'] or tr('(sans nom)')}  [{a['mime'] or tr('type inconnu')}, {size}]  — {tr('double-clic : enregistrer')}")
             it.setData(Qt.UserRole, (a["idx"], a["filename"] or "piece_jointe"))
             self.atts.addItem(it)
         self.atts.setVisible(bool(rows))
@@ -267,7 +268,7 @@ class MessageViewer(QWidget):
             self.conn.execute("SELECT kind FROM archives WHERE id=?", (m["archive_id"],)).fetchone()["kind"] == "olm"
         self.notice.setVisible(preview_only)
         if preview_only:
-            self.notice.setText("Aperçu seul : le corps complet de ce message n'est pas présent dans l'archive OLM.")
+            self.notice.setText(tr("Aperçu seul : le corps complet de ce message n'est pas présent dans l'archive OLM."))
         html = zlib.decompress(b["body_html"]).decode("utf-8", "replace") if b and b["body_html"] else None
         if html and self.prefer_html.isChecked():
             images = self._inline_images(rows, mid)
@@ -281,7 +282,7 @@ class MessageViewer(QWidget):
                 self.web_fallback.setPlainText(re.sub(r"<[^>]+>", "", html))
                 self.stack.setCurrentWidget(self.web_fallback)
         else:
-            self.text.setPlainText(m["body_text"] or "(message sans corps)")
+            self.text.setPlainText(m["body_text"] or tr("(message sans corps)"))
             self.stack.setCurrentWidget(self.text)
         self._fit_top()
 
@@ -289,9 +290,9 @@ class MessageViewer(QWidget):
         """HTML trop volumineux ou illisible : texte brut + avertissement (jamais l'ancien contenu)."""
         if m is None and self.current_id:
             m = self.conn.execute("SELECT body_text FROM messages WHERE id=?", (self.current_id,)).fetchone()
-        self.text.setPlainText((m["body_text"] if m else "") or "(message sans corps texte)")
+        self.text.setPlainText((m["body_text"] if m else "") or tr("(message sans corps texte)"))
         self.stack.setCurrentWidget(self.text)
-        self.notice.setText("Affichage HTML impossible (message trop volumineux ou invalide) : texte brut affiché.")
+        self.notice.setText(tr("Affichage HTML impossible (message trop volumineux ou invalide) : texte brut affiché."))
         self.notice.show()
         self._fit_top()
 

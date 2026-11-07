@@ -1,6 +1,6 @@
 [project]
 name = "mail-archive-explorer"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Consultation et recherche locales d'archives PST, MBOX, EML"
 requires-python = ">=3.12"
 license = "GPL-3.0-or-later"
@@ -16,6 +16,9 @@ mail-archive-explorer = "mail_archive_explorer.main:main"
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "mail_archive_explorer.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -42,6 +42,14 @@ jobs:
         with:
           python-version: "3.14"        # pas de cache pip : build de release reproductible et non empoisonnable
 
+      - name: Vérifier que l'étiquette correspond à la version du code
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          VERSION=$(python -c "import re,pathlib; print(re.search(r'__version__ = \"([^\"]+)\"', pathlib.Path('src/mail_archive_explorer/__init__.py').read_text()).group(1))")
+          TAG="${GITHUB_REF_NAME#v}"
+          [ "$(echo "$TAG" | tr -d '-')" = "$VERSION" ] || { echo "Étiquette $GITHUB_REF_NAME != version du code $VERSION"; exit 1; }
+
       - name: Bibliothèques système Qt (Linux)
         if: runner.os == 'Linux'
         run: |

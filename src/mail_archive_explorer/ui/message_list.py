@@ -7,6 +7,7 @@ import sqlite3
 from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt
 from PySide6.QtGui import QColor, QFont
 
+from ..core.i18n import tr
 from ..core.search import Cursor, Filters, Hit, search
 
 PAGE = 200
@@ -90,9 +91,9 @@ class MessageListModel(QAbstractTableModel):
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return COLUMNS[section][0]
+            return tr(COLUMNS[section][0])
         if orientation == Qt.Horizontal and role == Qt.ToolTipRole and COLUMNS[section][1]:
-            return "Cliquer pour trier"
+            return tr("Cliquer pour trier")
 
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
@@ -102,11 +103,11 @@ class MessageListModel(QAbstractTableModel):
             if c == COL_DATE:
                 return h.sent_at[:16] if h.sent_at else "—"
             if c == COL_FROM:
-                return short_name(h.sender) or "(inconnu)"
+                return short_name(h.sender) or tr("(inconnu)")
             if c == COL_TO:
                 return short_recipients(h.recipients)
             if c == COL_SUBJECT:
-                return h.subject or "(sans objet)"
+                return h.subject or tr("(sans objet)")
             if c == COL_ATT:
                 return "📎" if h.has_attachments else ""
             if c == COL_FOLDER:

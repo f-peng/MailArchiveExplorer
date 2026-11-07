@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Callable, Iterable, Iterator
 
 from ..core.archive_manager import ReaderCache
+from ..core.i18n import tr
 from ..core.search import Cursor, Filters, search
 from .attachment_service import extract_stream, safe_destination, sanitize_filename
 
@@ -110,7 +111,7 @@ def build_eml(conn: sqlite3.Connection, row, readers: ReaderCache) -> tuple[byte
         try:
             data = reader.open_attachment(row["source_ref"], a["idx"]).read()
         except Exception as exc:  # noqa: BLE001 - contenu absent de l'archive (fréquent en OLM)
-            warnings.append(f"pièce jointe « {a['filename']} » indisponible ({type(exc).__name__})")
+            warnings.append(tr("pièce jointe « {f} » indisponible ({e})").format(f=a['filename'], e=type(exc).__name__))
             continue
         maintype, subtype = _ctype(a["mime"])
         target = msg.get_body(preferencelist=("html",)) or msg
@@ -139,7 +140,7 @@ def _run(ids: list[int], report: ExportReport, progress: Progress | None, cancel
             body(mid)
         except Exception as exc:  # noqa: BLE001 - une erreur n'arrête pas l'export
             report.skipped += 1
-            report.error(f"message {mid} : {type(exc).__name__}: {str(exc)[:120]}")
+            report.error(tr("message {m} : {e}").format(m=mid, e=f"{type(exc).__name__}: {str(exc)[:120]}"))
             log.warning("Export message %s : %s", mid, exc)
         if progress and (n % 25 == 0 or n == total):
             progress(n, total)
@@ -160,7 +161,7 @@ def export_eml(conn, ids: list[int], dest_dir: Path, readers: ReaderCache,
             fh.write(data)
         rep.written += 1
         for w in warns:
-            rep.error(f"message {mid} : {w}")
+            rep.error(tr("message {m} : {w}").format(m=mid, w=w))
     return _run(ids, rep, progress, cancel, one)
 
 
@@ -180,7 +181,7 @@ def export_mbox(conn, ids: list[int], dest_file: Path, readers: ReaderCache,
                 progress: Progress | None = None, cancel: threading.Event | None = None) -> ExportReport:
     dest_file = Path(dest_file)
     if dest_file.exists():
-        raise FileExistsError(f"{dest_file} existe déjà : l'export ne remplace jamais un fichier.")
+        raise FileExistsError(tr("{p} existe déjà : l'export ne remplace jamais un fichier.").format(p=dest_file))
     rep = ExportReport(target=str(dest_file))
     with open(dest_file, "xb") as out:
         def one(mid):
@@ -189,7 +190,7 @@ def export_mbox(conn, ids: list[int], dest_file: Path, readers: ReaderCache,
             out.write(_mbox_entry(row, data))
             rep.written += 1
             for w in warns:
-                rep.error(f"message {mid} : {w}")
+                rep.error(tr("message {m} : {w}").format(m=mid, w=w))
         _run(ids, rep, progress, cancel, one)
     return rep
 
@@ -213,7 +214,7 @@ def export_attachments(conn, ids: list[int], dest_dir: Path, readers: ReaderCach
                 rep.written += 1
             except Exception as exc:  # noqa: BLE001
                 rep.skipped += 1
-                rep.error(f"message {mid} « {a['filename']} » : {type(exc).__name__}: {str(exc)[:100]}")
+                rep.error(tr("message {m} « {f} » : {e}").format(m=mid, f=a['filename'], e=f"{type(exc).__name__}: {str(exc)[:100]}"))
     return _run(ids, rep, progress, cancel, one)
 
 
@@ -234,7 +235,7 @@ def export_csv(conn, query: str, filters: Filters, dest_file: Path, sort: str = 
     """Résultats d'une recherche (tous, pas seulement la page affichée), UTF-8 avec BOM."""
     dest_file = Path(dest_file)
     if dest_file.exists():
-        raise FileExistsError(f"{dest_file} existe déjà : l'export ne remplace jamais un fichier.")
+        raise FileExistsError(tr("{p} existe déjà : l'export ne remplace jamais un fichier.").format(p=dest_file))
     rep = ExportReport(target=str(dest_file))
     cursor = None
     with open(dest_file, "x", encoding="utf-8-sig", newline="") as f:

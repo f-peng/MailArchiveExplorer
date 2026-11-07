@@ -5,6 +5,7 @@ import sqlite3
 from dataclasses import dataclass, field
 from typing import Optional
 
+from .i18n import tr
 from .query_parser import ParsedQuery, QueryError, parse_query
 
 
@@ -120,7 +121,7 @@ def search(conn: sqlite3.Connection, query: str = "", filters: Filters | None = 
         rows = conn.execute(sql, [*params, limit + 1]).fetchall()
     except sqlite3.OperationalError as exc:
         if pq.fts:      # syntaxe FTS5 refusée par le moteur (ex. champ imbriqué) : message clair, jamais d'erreur SQL
-            raise QueryError("Requête non comprise : simplifiez-la (champs imbriqués non autorisés).") from exc
+            raise QueryError(tr("Requête non comprise : simplifiez-la (champs imbriqués non autorisés).")) from exc
         raise
     more = len(rows) > limit
     rows = rows[:limit]

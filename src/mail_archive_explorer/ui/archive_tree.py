@@ -5,6 +5,8 @@ import os
 import sqlite3
 
 from PySide6.QtCore import Qt
+
+from ..core.i18n import tr
 from PySide6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 
@@ -14,7 +16,7 @@ class ArchiveTree(QTreeWidget):
     def __init__(self, conn: sqlite3.Connection):
         super().__init__()
         self.conn = conn
-        self.setHeaderLabels(["Archives et dossiers"])
+        self.setHeaderLabels([tr("Archives et dossiers")])
 
     def selected_archive(self) -> int | None:
         item = self.currentItem()
@@ -23,7 +25,7 @@ class ArchiveTree(QTreeWidget):
     def reload(self) -> None:
         self.clear()
         total = self.conn.execute("SELECT count(*) FROM messages").fetchone()[0]
-        root = QTreeWidgetItem([f"Tous les messages ({total})"])
+        root = QTreeWidgetItem([tr("Tous les messages ({n})").format(n=total)])
         root.setData(0, self.ROLE, ("all", None, None))
         self.addTopLevelItem(root)
         counts = {r["folder_id"]: r["n"] for r in self.conn.execute(

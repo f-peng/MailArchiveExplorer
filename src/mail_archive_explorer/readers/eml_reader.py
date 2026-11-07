@@ -7,6 +7,7 @@ from email import policy
 from pathlib import Path
 from typing import BinaryIO, Iterator
 
+from ..core.i18n import tr
 from ..core.models import FolderInfo, RawMessage, ReadError
 from .email_parse import attachment_bytes, parse_bytes, to_raw_message, walk_attachments
 
@@ -54,7 +55,7 @@ class EmlReader:
         root_real = self.root.resolve()
         for f in files:
             if not self._single and (f.is_symlink() or not f.resolve().is_relative_to(root_real)):
-                yield ReadError(f.name, folder.path, "symlink", "SymlinkIgnored", "lien symbolique ou fichier hors du dossier : ignoré")
+                yield ReadError(f.name, folder.path, "symlink", "SymlinkIgnored", tr("lien symbolique ou fichier hors du dossier : ignoré"))
                 continue
             ref = str(f.relative_to(self.root.parent if self._single else self.root)) if not self._single else f.name
             try:

@@ -7,6 +7,7 @@ A **100% local** desktop application to browse, index and search mail archives: 
 - No data leaves your machine; source archives are opened **read-only** and are never modified.
 - Background import (cancellable and resumable), full-text search (accent-insensitive), column sorting, light and dark themes.
 - Export to EML, MBOX, CSV and attachments.
+- **French and English** interface (🌐 *Language* button, applied on restart; automatic by default from the system language). **About** shows the version and copyable details for bug reports.
 
 > **Status: pre-release (`v0.1.1-rc3`).** Usable, but young: see "Known limitations".
 
@@ -51,7 +52,7 @@ python3 -m venv .venv
 
 Data (SQLite database, logs) lives in `~/Library/Application Support/MailArchiveExplorer` (macOS), `%APPDATA%\MailArchiveExplorer` (Windows) or `~/.local/share/MailArchiveExplorer` (Linux). Set `MAE_DATA_DIR` to move it.
 
-- **Add an archive**: background import (cancellable; an interrupted import resumes when you add the archive again). *The interface is currently French-only.*
+- **Add an archive**: background import (cancellable; an interrupted import resumes when you add the archive again).
 - **Unload the archive**: select the archive (or one of its folders) in the tree, then use the toolbar button or the right-click menu. It removes the archive from the index; the source file is never touched and can be reloaded.
 - **Export ▾** (or right-click in the list): `.eml` (one file per message), a single `.mbox`, attachments, search results as `.csv`. Applies to the selection, or to all results of the current view if nothing is selected. An export never overwrites an existing file.
 - **Attachments**: double-click to save (sanitized name). The viewer shows text or HTML.
@@ -98,7 +99,7 @@ Local executable build: `pip install -r requirements-build.txt && pip install --
 - **PST**: validated on small public files; throughput and memory on multi-GB archives are unmeasured. Only e-mails are imported (not contacts, calendars, tasks). An embedded message attachment is extracted in raw form.
 - **OLM**: reader written from a single real file; depending on the archive, many messages only have a preview (not the full body) and most inline images have no content. Dates are assumed to be UTC.
 - **Export**: EML for PST/OLM messages is reconstructed (original transport headers are absent); MBOX/EML sources are re-exported byte for byte.
-- Import runs in a thread of the application (not a separate process); no deduplication UI (duplicates are detected and kept); French-only interface; unsigned executables.
+- Import runs in a thread of the application (not a separate process); no deduplication UI (duplicates are detected and kept); unsigned executables.
 
 ## License
 

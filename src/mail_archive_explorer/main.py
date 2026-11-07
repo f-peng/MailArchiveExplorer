@@ -15,6 +15,9 @@ def main() -> int:
     setup_logging()
     app = QApplication(sys.argv)
     app.setApplicationName("Mail Archive Explorer")
+    from PySide6.QtCore import QLocale, QSettings
+    from .core.i18n import resolve, set_language
+    set_language(resolve(QSettings("MailArchiveExplorer", "ui").value("language", "auto"), QLocale.system().name()))
     from .ui.main_window import MainWindow
     win = MainWindow(db_path())
     win.show()
