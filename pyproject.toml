@@ -1,0 +1,25 @@
+[project]
+name = "mail-archive-explorer"
+version = "0.1.0"
+description = "Consultation et recherche locales d'archives PST, MBOX, EML"
+requires-python = ">=3.12"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+dependencies = ["PySide6>=6.7,<7", "libpff-python==20260926"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+mail-archive-explorer = "mail_archive_explorer.main:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

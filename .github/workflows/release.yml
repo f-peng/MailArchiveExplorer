@@ -1,0 +1,116 @@
+name: Release
+
+# Construit des exécutables autonomes. Déclenché par une étiquette de version (v0.1.0) ou à la main.
+# Les tests (3 systèmes) doivent passer avant tout build. Droits minimaux : écriture uniquement
+# dans le job « publish » ; les jobs de build n'ont que la lecture + l'attestation de provenance.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+    permissions:
+      contents: read
+
+  build:
+    name: Build ${{ matrix.name }}
+    needs: tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write         # attestation de provenance (Sigstore)
+      attestations: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: windows-x64, os: windows-latest }
+          - { name: macos-arm64, os: macos-latest }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.14"        # pas de cache pip : build de release reproductible et non empoisonnable
+
+      - name: Installation (versions exactes ; l'application elle-même sans résolution de dépendances)
+        shell: bash
+        run: |
+          python -m pip install -r requirements-build.txt
+          python -m pip install --no-deps -e .
+
+      - name: PyInstaller
+        working-directory: packaging
+        run: pyinstaller --noconfirm --distpath ../build/dist --workpath ../build/work mail_archive_explorer.spec
+
+      - name: Auto-test de l'application PACKAGÉE (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          QT_QPA_PLATFORM: offscreen
+          MAE_SELFTEST_OUT: selftest.txt
+        run: |
+          ./build/dist/MailArchiveExplorer/MailArchiveExplorer.exe --selftest || true
+          cat selftest.txt
+          grep -q "SELFTEST OK" selftest.txt
+
+      - name: Auto-test de l'application PACKAGÉE (macOS)
+        if: runner.os == 'macOS'
+        env:
+          QT_QPA_PLATFORM: offscreen
+          MAE_SELFTEST_OUT: selftest.txt
+        run: |
+          ./build/dist/MailArchiveExplorer.app/Contents/MacOS/MailArchiveExplorer --selftest || true
+          cat selftest.txt
+          grep -q "SELFTEST OK" selftest.txt
+
+      - name: Archive (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path build/dist/MailArchiveExplorer -DestinationPath MailArchiveExplorer-${{ matrix.name }}.zip
+
+      - name: Image disque (macOS)
+        if: runner.os == 'macOS'
+        run: hdiutil create -volname "Mail Archive Explorer" -srcfolder build/dist/MailArchiveExplorer.app -ov -format UDZO MailArchiveExplorer-${{ matrix.name }}.dmg
+
+      - name: Attestation de provenance
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-path: |
+            MailArchiveExplorer-${{ matrix.name }}.zip
+            MailArchiveExplorer-${{ matrix.name }}.dmg
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: MailArchiveExplorer-${{ matrix.name }}
+          path: |
+            MailArchiveExplorer-${{ matrix.name }}.zip
+            MailArchiveExplorer-${{ matrix.name }}.dmg
+          if-no-files-found: error
+
+  publish:
+    name: Publier la release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write         # seul job autorisé à écrire dans le dépôt
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
+        with:
+          files: dist/*
+          generate_release_notes: true

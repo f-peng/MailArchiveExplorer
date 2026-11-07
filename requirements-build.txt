@@ -1,0 +1,7 @@
+# Dépendances EXACTES pour construire les exécutables (reproductibilité).
+# Les dépendances transitives de PySide6 (shiboken6, PySide6_Essentials, PySide6_Addons) sont
+# épinglées à la même version par PySide6 lui-même. PyInstaller tire ses propres dépendances
+# (pyinstaller-hooks-contrib, altgraph, macholib/pefile, packaging, setuptools) sans épinglage ici.
+PySide6==6.12.0
+libpff-python==20260926
+pyinstaller==6.22.3

@@ -1,0 +1,20 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+build/
+dist/
+*.egg-info/
+# Données utilisateur et archives : jamais dans le dépôt
+data/
+*.pst
+*.ost
+*.mbox
+tests/fixtures/private/
+.DS_Store
+*.olm
+
+# Documents de travail internes (non publiés)
+SPEC.md
+LIMITATIONS.md
