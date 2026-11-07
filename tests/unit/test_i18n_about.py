@@ -24,7 +24,7 @@ def _literals():
     for p in SRC.rglob("*.py"):
         if p.name in ("i18n.py", "translations_en.py"):
             continue
-        for n in ast.walk(ast.parse(p.read_text())):
+        for n in ast.walk(ast.parse(p.read_text(encoding="utf-8"))):
             if isinstance(n, ast.Call) and getattr(n.func, "id", None) == "tr" and n.args:
                 a = n.args[0]
                 if isinstance(a, ast.Constant) and isinstance(a.value, str):
@@ -80,7 +80,7 @@ def test_version_source_unique():
     assert re.fullmatch(r"\d+\.\d+\.\d+(?:(?:a|b|rc)\d+)?", __version__)
     d = diagnostics()
     assert d["version"] == __version__ and d["sqlite"] and d["python"]
-    toml = (SRC.parents[1] / "pyproject.toml").read_text()
+    toml = (SRC.parents[1] / "pyproject.toml").read_text(encoding="utf-8")
     assert 'dynamic = ["version"]' in toml and "mail_archive_explorer.__version__" in toml
 
 
