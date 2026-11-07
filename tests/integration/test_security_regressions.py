@@ -1,6 +1,7 @@
 """Régressions issues de l'audit de sécurité indépendant (F2-F5, F8, F11, F13, F14, F16)."""
 import io
 import sqlite3
+import sys
 import zipfile
 from pathlib import Path
 
@@ -132,6 +133,8 @@ def test_mbox_coupure_au_milieu_d_une_ligne_longue(tmp_path):
 # F8 -------------------------------------------------------------------------------------------
 @pytest.mark.parametrize("name", ["dossier#1", "a?b", "50%20x", "espace et é"])
 def test_f8_chemin_special_base(tmp_path, name):
+    if sys.platform == "win32" and "?" in name:
+        pytest.skip("« ? » est interdit dans un nom de dossier Windows")
     d = tmp_path / name
     c = open_database(d / "archive.db")
     c.execute("INSERT INTO archives(path,kind,size,mtime,fingerprint) VALUES('p','mbox',1,1,'f')")
