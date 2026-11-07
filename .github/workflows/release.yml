@@ -30,6 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - { name: linux-x64, os: ubuntu-22.04 }     # glibc 2.35 : compatible avec la plupart des distributions récentes
           - { name: windows-x64, os: windows-latest }
           - { name: macos-arm64, os: macos-latest }
     steps:
@@ -41,6 +42,13 @@ jobs:
         with:
           python-version: "3.14"        # pas de cache pip : build de release reproductible et non empoisonnable
 
+      - name: Bibliothèques système Qt (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libdbus-1-3 libnss3 \
+            libxcomposite1 libxdamage1 libxrandr2 libxtst6 libxcursor1 libxi6 libfontconfig1 libasound2
+
       - name: Installation (versions exactes ; l'application elle-même sans résolution de dépendances)
         shell: bash
         run: |
@@ -50,6 +58,17 @@ jobs:
       - name: PyInstaller
         working-directory: packaging
         run: pyinstaller --noconfirm --distpath ../build/dist --workpath ../build/work mail_archive_explorer.spec
+
+      - name: Auto-test de l'application PACKAGÉE (Linux)
+        if: runner.os == 'Linux'
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QTWEBENGINE_CHROMIUM_FLAGS: "--no-sandbox --disable-gpu"
+          MAE_SELFTEST_OUT: selftest.txt
+        run: |
+          ./build/dist/MailArchiveExplorer/MailArchiveExplorer --selftest || true
+          cat selftest.txt
+          grep -q "SELFTEST OK" selftest.txt
 
       - name: Auto-test de l'application PACKAGÉE (Windows)
         if: runner.os == 'Windows'
@@ -72,6 +91,10 @@ jobs:
           cat selftest.txt
           grep -q "SELFTEST OK" selftest.txt
 
+      - name: Archive (Linux)
+        if: runner.os == 'Linux'
+        run: tar -czf MailArchiveExplorer-${{ matrix.name }}.tar.gz -C build/dist MailArchiveExplorer
+
       - name: Archive (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -88,6 +111,7 @@ jobs:
           subject-path: |
             MailArchiveExplorer-${{ matrix.name }}.zip
             MailArchiveExplorer-${{ matrix.name }}.dmg
+            MailArchiveExplorer-${{ matrix.name }}.tar.gz
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -95,6 +119,7 @@ jobs:
           path: |
             MailArchiveExplorer-${{ matrix.name }}.zip
             MailArchiveExplorer-${{ matrix.name }}.dmg
+            MailArchiveExplorer-${{ matrix.name }}.tar.gz
           if-no-files-found: error
 
   publish:
