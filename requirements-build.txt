@@ -3,5 +3,5 @@
 # épinglées à la même version par PySide6 lui-même. PyInstaller tire ses propres dépendances
 # (pyinstaller-hooks-contrib, altgraph, macholib/pefile, packaging, setuptools) sans épinglage ici.
 PySide6==6.12.0
-libpff-python==20260926
+libpff-python==20261030
 pyinstaller==6.22.3
