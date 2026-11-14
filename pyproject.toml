@@ -5,7 +5,7 @@ description = "Consultation et recherche locales d'archives PST, MBOX, EML"
 requires-python = ">=3.12"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]
-dependencies = ["PySide6>=6.7,<7", "libpff-python==20260926"]
+dependencies = ["PySide6>=6.7,<7", "libpff-python==20261030"]
 
 [project.optional-dependencies]
 dev = ["pytest"]
